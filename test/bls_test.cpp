@@ -246,6 +246,80 @@ CYBOZU_TEST_AUTO(k_of_n)
 	}
 }
 
+CYBOZU_TEST_AUTO(aggregate_sigs) {
+
+	// generate messages
+	const std::string m1 = "abc";
+	const std::string m2 = "def";
+	const std::string m3 = "hijklmnopqrs";
+
+	std::vector<std::string> msgVec;
+	msgVec.push_back(m1);
+	msgVec.push_back(m2);
+	msgVec.push_back(m3);
+
+
+	// generate secrets
+	bls::SecretKey sec1;
+	bls::SecretKey sec2;
+	bls::SecretKey sec3;
+
+	sec1.init();
+	sec2.init();
+	sec3.init();
+
+	// std::cout << "SECRETS" << std::endl;
+	// std::cout << sec1 << std::endl;
+	// std::cout << sec2 << std::endl;
+	// std::cout << sec3 << std::endl;
+
+	// get public keys
+	bls::PublicKeyVec pubVec;
+	bls::PublicKey pub1;
+	bls::PublicKey pub2;
+	bls::PublicKey pub3;
+
+	sec1.getPublicKey(pub1);
+	sec2.getPublicKey(pub2);
+	sec2.getPublicKey(pub3);
+
+	pubVec.push_back(pub1);
+	pubVec.push_back(pub2);
+	pubVec.push_back(pub3);
+
+
+	// generate signatures
+	bls::Sign s1;
+	bls::Sign s2;
+	bls::Sign s3;
+
+	sec1.sign(s1, m1);
+	sec2.sign(s2, m2);
+	sec2.sign(s3, m3);
+
+	// calculate aggregate signature
+	bls::Sign sAgg;
+
+	sAgg = s1;
+	// std::cout << "AGGREGATE SIG" << sAgg << std::endl;
+	// std::cout << "SIG 1" << s1 << std::endl;
+
+	sAgg.add(s2);
+	// std::cout << "AGGREGATE SIG" << sAgg << std::endl;
+	// std::cout << "SIG 2" << s2 << std::endl;
+
+	sAgg.add(s3);
+	// std::cout << "AGGREGATE SIG" << sAgg << std::endl;
+	// std::cout << "SAgg " << sAgg << std::endl;
+	// std::cout << "s1 " << s1 << std::endl;
+
+	CYBOZU_TEST_ASSERT(s1.verify(pub1, m1));
+	CYBOZU_TEST_ASSERT(s2.verify(pub2, m2));
+	CYBOZU_TEST_ASSERT(s3.verify(pub3, m3));
+
+	CYBOZU_TEST_ASSERT(sAgg.verifyAggregate(msgVec, pubVec));
+}
+
 CYBOZU_TEST_AUTO(pop)
 {
 	const size_t k = 3;

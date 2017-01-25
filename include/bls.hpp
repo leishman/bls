@@ -193,6 +193,11 @@ public:
 		verify self(pop) with pub
 	*/
 	bool verify(const PublicKey& pub) const;
+
+	/*
+		verify self(pop) with message and pupkey vectors
+	 */
+	bool verifyAggregate(const std::vector<std::string> &messages, const std::vector<PublicKey> &pubKeys);
 	/*
 		recover sign from k signVec
 	*/

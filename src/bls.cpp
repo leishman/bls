@@ -241,6 +241,37 @@ bool Sign::verify(const PublicKey& pub) const
 	return verify(pub, str);
 }
 
+
+bool Sign::verifyAggregate(const std::vector<std::string>& msgVec, const PublicKeyVec& pubVec) {
+	assert(msgVec.size() == pubVec.size());
+	assert(msgVec.size() > 0);
+
+	// TODO: prepend pubkey TODO
+
+  Fp12 e1, e2; // to be aggregated
+  G1 Hm;
+
+  BN::pairing(e1, getQ(), getInner().sHm); // e(Q, s Hm)
+
+  // calculate initial pairing
+  HashAndMapToG1(Hm, msgVec[0]);
+  BN::millerLoop(e2, pubVec[0].getInner().sQ, Hm); // e(sQ1, Hm1)
+
+	for(size_t i=1; i < msgVec.size(); i++) {
+		Fp12 ei;
+		G1 Hmi;
+
+		HashAndMapToG1(Hmi, msgVec[i]);
+		BN::millerLoop(ei, pubVec[i].getInner().sQ, Hmi); // e(sQi, Hmi) (without exponenetiation)
+		e2 *= ei;
+	}
+
+	// delay final exp for performance
+	BN::finalExp(e2, e2);
+
+	return e1 == e2;
+}
+
 void Sign::recover(const SignVec& signVec, const IdVec& idVec)
 {
 	if (signVec.size() != idVec.size()) throw cybozu::Exception("Sign:recover:bad size") << signVec.size() << idVec.size();
